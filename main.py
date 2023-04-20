@@ -121,6 +121,7 @@ async def rr(interaction: discord.Interaction, dice: str):
 )
 async def ud(interaction: discord.Interaction, query: str):
     """Search Urban Dictionary for a phrase."""
+    await interaction.response.defer()
     url = "https://mashape-community-urban-dictionary.p.rapidapi.com/define"
 
     headers = {
@@ -135,16 +136,19 @@ async def ud(interaction: discord.Interaction, query: str):
         try:
             text = await response.text()
             data = json.loads(text)["list"][0]
-            e = discord.Embed(colour=15229474, timestamp=interaction.created_at)
+            e = discord.Embed(
+                colour=15229474, timestamp=interaction.created_at)
             e.title = "Urban Dictionary"
-            e.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
+            e.set_author(name=interaction.user.name,
+                         icon_url=interaction.user.display_avatar.url)
             e.add_field(name=f"{query}:", value=data['definition'].replace('[', '').replace(']', '')[:1023],
                         inline=False)
-            e.add_field(name="Example:", value=data['example'].replace('[', '').replace(']', ''), inline=False)
-            await interaction.response.send_message(embed=e)
+            e.add_field(name="Example:", value=data['example'].replace(
+                '[', '').replace(']', ''), inline=False)
+            await interaction.followup.send(embed=e)
 
         except Exception as er:
-            await interaction.response.send_message(content="Something went wrong. Probably no results found",
+            await interaction.followup.send(content="Something went wrong. Probably no results found",
                                                     ephemeral=True)
             print(type(er), er)
             raise
@@ -157,6 +161,7 @@ async def ud(interaction: discord.Interaction, query: str):
 )
 async def ge(interaction: discord.Interaction, query: str):
     """Lookup price on OSRS GE"""
+    await interaction.response.defer()
     url = f"https://secure.runescape.com/m=itemdb_oldschool/api/catalogue/items.json"
     querystring = {
         "category": 1,
@@ -176,16 +181,18 @@ async def ge(interaction: discord.Interaction, query: str):
             data = json.loads(await response.text())["items"][0]
             desc = data["description"]
             current_price = data["current"]["price"]
-            em = discord.Embed(colour=1452538, timestamp=interaction.created_at)
+            em = discord.Embed(
+                colour=1452538, timestamp=interaction.created_at)
             em.title = "GE price lookup"
             em.set_author(name=data["name"], icon_url=data["icon_large"])
             em.add_field(name="Price", value=str(current_price), inline=True)
-            em.add_field(name="Price change today", value=data["today"]["price"], inline=True)
+            em.add_field(name="Price change today",
+                         value=data["today"]["price"], inline=True)
             em.add_field(name="Description", value=desc, inline=False)
-            await interaction.response.send_message(embed=em)
+            await interaction.followup.send(embed=em)
 
     except Exception as er:
-        await interaction.response.send_message(content="Something went wrong. Probably no results found",
+        await interaction.followup.send(content="Something went wrong. Probably no results found",
                                                 ephemeral=True)
         print(type(er), er)
     await session.close()
@@ -206,9 +213,12 @@ class RecipeDropdown(discord.ui.Select):
         em = discord.Embed(colour=6999040, timestamp=interaction.created_at)
         em.set_author(name=self.values[0])
         em.set_image(url=self.recipes[self.values[0]]["image"])
-        em.add_field(name="Ingredients", value='\n'.join(self.recipes[self.values[0]]['ingredients']), inline=False)
-        em.add_field(name="Recipe", value=self.recipes[self.values[0]]["url"], inline=True)
-        em.add_field(name="Calories", value=f"{int(self.recipes[self.values[0]]['calories']):,}", inline=True)
+        em.add_field(name="Ingredients", value='\n'.join(
+            self.recipes[self.values[0]]['ingredients']), inline=False)
+        em.add_field(
+            name="Recipe", value=self.recipes[self.values[0]]["url"], inline=True)
+        em.add_field(
+            name="Calories", value=f"{int(self.recipes[self.values[0]]['calories']):,}", inline=True)
 
         if int(self.recipes[self.values[0]]["time"]) != 0:
             em.add_field(name="Time to cook",
@@ -221,6 +231,7 @@ class RecipeDropdown(discord.ui.Select):
     query="Which ingredients to search."
 )
 async def recipe(interaction: discord.Interaction, query: str):
+    await interaction.response.defer()
     url = "https://api.edamam.com/api/recipes/v2"
     querystring = {
         "type": "public",
@@ -239,7 +250,8 @@ async def recipe(interaction: discord.Interaction, query: str):
     try:
         async with session.get(url=url, params=querystring, headers=headers) as response:
             data = json.loads(await response.text())["hits"]
-            em = discord.Embed(colour=6999040, timestamp=interaction.created_at)
+            em = discord.Embed(
+                colour=6999040, timestamp=interaction.created_at)
             em.title = "Recipe Lookup"
             first = data[0]["recipe"]
             em.add_field(name=first["label"], value=first["url"])
@@ -257,10 +269,10 @@ async def recipe(interaction: discord.Interaction, query: str):
                 }
 
             v.add_item(RecipeDropdown(important_data))
-            await interaction.response.send_message(embed=em, view=v)
+            await interaction.followup.send(embed=em, view=v)
 
     except Exception as er:
-        await interaction.response.send_message(content="Something went wrong. Probably no results found",
+        await interaction.followup.send(content="Something went wrong. Probably no results found",
                                                 ephemeral=True)
         print(type(er), er)
         raise
@@ -295,11 +307,13 @@ class BardDropdown(discord.ui.Select):
         response = self.choices["data"][int(self.values[0])]["content"][0]
         em = discord.Embed(colour=1864940, timestamp=interaction.created_at)
         em.title = "Google Bard query"
-        em.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
+        em.set_author(name=interaction.user.name,
+                      icon_url=interaction.user.display_avatar.url)
         em.add_field(name="Query:", value=q, inline=False)
         if len(response) > 1023:
             while n * 1023 < len(response):
-                em.add_field(name=s, value=response[n * 1023:(n + 1) * 1023], inline=False)
+                em.add_field(
+                    name=s, value=response[n * 1023:(n + 1) * 1023], inline=False)
                 n += 1
                 s = "Continued:"
         else:
@@ -319,13 +333,15 @@ async def bard(interaction: discord.Interaction, query: str):
     choices = response["choices"]
     em = discord.Embed(colour=1864940, timestamp=interaction.created_at)
     em.title = "Google Bard query"
-    em.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
+    em.set_author(name=interaction.user.name,
+                  icon_url=interaction.user.display_avatar.url)
     em.add_field(name="Query:", value=query, inline=False)
     n = 0
     s = "Response:"
     if len(response["content"]) > 1023:
         while n * 1023 < len(response["content"]):
-            em.add_field(name=s, value=response["content"][n * 1023:(n + 1) * 1023], inline=False)
+            em.add_field(
+                name=s, value=response["content"][n * 1023:(n + 1) * 1023], inline=False)
             n += 1
             s = "Continued:"
     else:
@@ -338,7 +354,7 @@ async def bard(interaction: discord.Interaction, query: str):
     }
     v.add_item(BardDropdown(choices))
     await interaction.followup.send(embed=em, view=v)
-    
+
 
 @client.tree.command()
 @app_commands.describe(
@@ -352,17 +368,20 @@ async def gpt(interaction: discord.Interaction, query: str):
                                        "content": query}])
     em = discord.Embed(colour=5364300, timestamp=interaction.created_at)
     em.title = "ChatGPT query"
-    em.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
+    em.set_author(name=interaction.user.name,
+                  icon_url=interaction.user.display_avatar.url)
     em.add_field(name="Query:", value=query, inline=False)
     n = 0
     s = "Response:"
     if len(response.choices[0]["message"]["content"]) > 1023:
         while n * 1023 < len(response.choices[0]["message"]["content"]):
-            em.add_field(name=s, value=response.choices[0]["message"]["content"][n*1023:(n+1)*1023], inline=False)
+            em.add_field(
+                name=s, value=response.choices[0]["message"]["content"][n*1023:(n+1)*1023], inline=False)
             n += 1
             s = "Continued:"
     else:
-        em.add_field(name=s, value=response.choices[0]["message"]["content"], inline=False)
+        em.add_field(
+            name=s, value=response.choices[0]["message"]["content"], inline=False)
     print(response.choices[0]["message"]["content"])
     await interaction.followup.send(embed=em)
 
