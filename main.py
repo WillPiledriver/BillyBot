@@ -20,7 +20,8 @@ class Bot(discord.Client):
         self.tree = app_commands.CommandTree(self)
         self.funny_words = {
             "cum": "(cum)",
-            "bruh": "(bruh)"
+            "bruh": "(bruh)",
+            "yo": "(yo)"
         }
 
     async def setup_hook(self):
